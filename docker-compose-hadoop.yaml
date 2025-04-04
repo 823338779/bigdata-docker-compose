@@ -73,11 +73,11 @@ services:
     ports:
       - "10000:10000"
 
-  zookeeper:
-    image: coomia/zookeeper:0.1
-    container_name: zookeeper
-    ports:
-      - 2181:2181
+#  zookeeper:
+#    image: coomia/zookeeper:0.1
+#    container_name: zookeeper
+#    ports:
+#      - 2181:2181
 
 volumes:
   alluxio-worker-data:
