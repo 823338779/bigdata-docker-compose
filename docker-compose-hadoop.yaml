@@ -1,0 +1,85 @@
+version: "3"
+services:
+  namenode:
+    image: coomia/hadoop3.2-namenode:1.0
+    container_name: namenode
+    ports:
+      - 9870:9870
+      - 9000:9000
+    environment:
+      - CLUSTER_NAME=coomia-hdp-cluster
+    env_file:
+      - ./hadoop.env
+
+  datanode:
+    image: coomia/hadoop3.2-datanode:1.0
+    container_name: datanode
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    ports:
+      - "9864"
+    env_file:
+      - ./hadoop.env
+
+  resourcemanager:
+    image: coomia/hadoop3.2-resourcemanager:1.0
+    container_name: resourcemanager
+    ports:
+      - 8088:8088
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864"
+    env_file:
+      - ./hadoop.env
+
+  nodemanager:
+    image: coomia/hadoop3.2-nodemanager:1.0
+    container_name: nodemanager
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+
+  historyserver:
+    image: coomia/hadoop3.2-historyserver:1.0
+    container_name: historyserver
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+
+  hive-metastore:
+    image: coomia/hive3:1.0
+    container_name: hive-metastore
+    volumes:
+      - /data/tools:/tools
+    env_file:
+      - ./hadoop.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 hive-metastore-pg:5432"
+    ports:
+      - "9083:9083"
+  hive-metastore-pg:
+    image: coomia/hive-metastore-pg:1.0
+    container_name: hive-metastore-pg
+  hive-server:
+    image: coomia/hive3:1.0
+    container_name: hive-server
+    env_file:
+      - ./hadoop.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+
+  zookeeper:
+    image: coomia/zookeeper:0.1
+    container_name: zookeeper
+    ports:
+      - 2181:2181
+
+volumes:
+  alluxio-worker-data:
+  alluxio-ufs:
+  alluxio-journal:
